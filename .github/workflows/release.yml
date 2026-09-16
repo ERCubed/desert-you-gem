@@ -50,6 +50,12 @@ jobs:
       # securerandom default gem before Bundler sets up the Gemfile-resolved
       # version, causing `bundle exec rake release` to fail with a
       # check_for_activated_spec! conflict.
+      #
+      # await-release disabled: its post-publish polling step shells out to
+      # `gem exec`, a RubyGems 3.6+ subcommand not present in the RubyGems
+      # bundled with this runner's Ruby. The publish itself happens in the
+      # release rake task above and is unaffected either way.
       - uses: rubygems/release-gem@v1
         with:
           attestations: false
+          await-release: false
