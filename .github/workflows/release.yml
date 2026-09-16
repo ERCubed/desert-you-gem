@@ -44,4 +44,12 @@ jobs:
       # locally via `rake bump:*`, so this is a no-op here), builds the gem,
       # and pushes it to rubygems.org using short-lived OIDC credentials --
       # no long-lived API key is stored in this repo.
+      #
+      # attestations disabled: this experimental feature injects a RUBYOPT
+      # `-r` require at Ruby startup that activates the Ruby-bundled
+      # securerandom default gem before Bundler sets up the Gemfile-resolved
+      # version, causing `bundle exec rake release` to fail with a
+      # check_for_activated_spec! conflict.
       - uses: rubygems/release-gem@v1
+        with:
+          attestations: false
