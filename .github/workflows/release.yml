@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler: latest
+          bundler-cache: true
+
+      - run: bundle exec rake
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler: latest
+          bundler-cache: true
+
+      # Runs `bundle exec rake release`: tags the version (already tagged
+      # locally via `rake bump:*`, so this is a no-op here), builds the gem,
+      # and pushes it to rubygems.org using short-lived OIDC credentials --
+      # no long-lived API key is stored in this repo.
+      #
+      # attestations disabled: this experimental feature injects a RUBYOPT
+      # `-r` require at Ruby startup that activates the Ruby-bundled
+      # securerandom default gem before Bundler sets up the Gemfile-resolved
+      # version, causing `bundle exec rake release` to fail with a
+      # check_for_activated_spec! conflict.
+      #
+      # await-release disabled: its post-publish polling step shells out to
+      # `gem exec`, a RubyGems 3.6+ subcommand not present in the RubyGems
+      # bundled with this runner's Ruby. The publish itself happens in the
+      # release rake task above and is unaffected either way.
+      - uses: rubygems/release-gem@v1
+        with:
+          attestations: false
+          await-release: false
